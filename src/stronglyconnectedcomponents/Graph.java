@@ -15,6 +15,8 @@ public class Graph {
     private ArrayList<Node> nodes;
     private ArrayList<Edge> edges;
     private Direction adirection = Direction.left;
+    private int finishingTime;
+    private Node deepNode;
     
     public Graph(ArrayList<int[]> intArray){
         Iterator<int[]> itr = intArray.iterator();
@@ -23,8 +25,7 @@ public class Graph {
             Node left = this.addNode(someInts[0]);
             Node right = this.addNode(someInts[1]);
             this.addEdge(left, right);  
-        }
-        
+        }  
     }
     public Node addNode(int name){
         if (getNode(name) == null){
@@ -60,11 +61,49 @@ public class Graph {
         edges.add(anEdge);
     }
     
+    private void resetExploration(){
+        Iterator<Node> itr = nodes.iterator();
+        while (itr.hasNext()){
+            itr.next().explored= false;
+        }
+        Iterator<Edge> itr2 = edges.iterator();
+        while(itr2.hasNext()){
+            itr2.next().traveled = false;
+        }
+    }
+    
+    private void dfsLoop(){
+        finishingTime = 0; // number of nodes processed
+        deepNode = null; // for the leader in 2nd pass
+        Iterator<Node> itr = nodes.iterator();
+        while(itr.hasNext()){
+            Node i = itr.next();
+            if (i.explored == false){
+                deepNode = i;//then do DFS
+                dfs(deepNode);
+            }
+        }
+    }
+    
+    private void dfs(Node aNode){
+        aNode.explored = true;
+        deepNode = aNode;
+        Iterator<Edge> itr = aNode.myEdges.iterator();
+        while(itr.hasNext()){
+            Node toNode = itr.next().toNode();
+                if (toNode.explored == false)
+                    dfs(toNode);
+        }
+        finishingTime++;
+        aNode.value = finishingTime;
+    }
+    
     private class Node{
         public Graph mygraph;
         public int name;
         public int value;
         public ArrayList<Edge> myEdges;
+        public boolean explored;
         
         public Node(int name, Graph agraph){
             mygraph = agraph;
@@ -80,6 +119,7 @@ public class Graph {
         private Node left;
         private Node right;
         private Graph mygraph;
+        public boolean traveled;
         
         public Edge(Node left, Node right){
             this.left = left;
