@@ -11,25 +11,31 @@ import java.util.*;
  * @author davidson_b
  */
 public class Graph {
-    private ArrayList<Node> nodes = new ArrayList<>();
-    private ArrayList<Edge> edges = new ArrayList<>();
+    private ArrayList<Node> nodes = new ArrayList<Node>();
+    private ArrayList<Edge> edges = new ArrayList<Edge>();
     private Direction adirection = Direction.left;
     private int finishingTime;
     private Node deepNode;
-    private Map<Integer, Node> nodeExists = new HashMap<>();
-    
+    private Map<Integer, Node> nodeExists = new HashMap<Integer, Node>();
+    //private ArrayList<int[]> intArray;
+
     public Graph(ArrayList<int[]> intArray){
+        //this.intArray = intArray;
+        populate(intArray);
+    }
+
+    private void populate(ArrayList<int[]> intArray){
         Iterator<int[]> itr = intArray.iterator();
         while(itr.hasNext()){
             int[] someInts = itr.next();
             Node left = this.addNode(someInts[0]);
             if (someInts[0] == someInts[1])
-                this.addEdge(left, left);  
+                this.addEdge(left, left);
             else{
                 Node right = this.addNode(someInts[1]);
-                this.addEdge(left, right);  
+                this.addEdge(left, right);
             }
-        }  
+        }
     }
     private Node addNode(int name){
         if (!nodeExists.containsKey(name)){
@@ -39,7 +45,7 @@ public class Graph {
             return aNode;
         }
         return nodeExists.get(name);
-    } 
+    }
     private Node getNode(int name){
         Node anode = null;
         if (nodes.size()> 0){
@@ -49,7 +55,7 @@ public class Graph {
         return anode;
     }
 
-       
+
     private Direction getdirection(){
         return adirection;
     }
@@ -65,93 +71,117 @@ public class Graph {
         left.addEdge(anEdge);
         right.addEdge(anEdge);
     }
-    
+
     private void resetExploration(){
+        //populate();
         Iterator<Node> itr = nodes.iterator();
-        while (itr.hasNext()){
-            itr.next().explored= false;
-        }
-        Iterator<Edge> itr2 = edges.iterator();
-        while(itr2.hasNext()){
-            itr2.next().traveled = false;
-        }
+        while (itr.hasNext())
+            itr.next().reset();
     }
-    
+
     private Stack dfsLoop(boolean SCC, Stack<Node> aStack){ //boolean checks whether or not to make SCC list
         finishingTime = 0; // number of nodes processed
         deepNode = null; // for the leader in 2nd pass
-        if (SCC == false){
-            Iterator<Node> itr = nodes.iterator();
-            while(itr.hasNext()){
-                Node i = itr.next();
-                if (i.explored == false){
-                    deepNode = i;//then do DFS
-                    dfs(deepNode);
-                }
+        Stack<Node> otherStack = new Stack();
+        while(!aStack.isEmpty()){
+            Node aNode = aStack.pop();
+            if (aNode.myEdges.size()>0 && aNode.explored == false){
+                deepNode = aNode;
+                otherStack.push(aNode);
+                dfs(deepNode);
+            }
+            else{
+                aNode.explored = true;
+                aNode.value = finishingTime;
+                finishingTime++;
             }
         }
-        else if (SCC == true){
-            Stack<Node> otherStack = new Stack();
-            while(!aStack.isEmpty()){
-                Node aNode = aStack.pop();
-                if (aNode.explored == false)
-                    deepNode = aNode;
-                    otherStack.push(aNode);
-                    dfs(deepNode);
+        if (SCC = true) {
+            Collections.reverse(otherStack);
+            Iterator<Node> itr = otherStack.iterator();
+            int oldaccumulator = 0;
+            int currentaccumulator = 0;
+            aStack = new Stack();
+            while (itr.hasNext()) {
+                Node aNode = itr.next();
+                oldaccumulator = currentaccumulator;
+                currentaccumulator = aNode.value;
+                aNode.value = aNode.value - oldaccumulator;
+                aStack.push(aNode);
             }
-                Collections.reverse(otherStack);
-                aStack = otherStack;
+            Collections.sort(aStack);
+            Collections.reverse(aStack);
+            return aStack;
         }
-        return aStack;
+        else
+            return otherStack;
     }
     public void Kosaraju(){
            toggleDirection();
-           dfsLoop(false, null);
            Stack<Node> aStack = stacker();
+           dfsLoop(false, aStack);
+           aStack = stacker();
            resetExploration();
            toggleDirection();
-           dfsLoop(true, aStack);
-           
+           aStack = dfsLoop(true, aStack);
+           Collections.sort(aStack);
+           Collections.reverse(aStack);
+           for(int i = 0; i <5; i++)
+               System.out.println(aStack.pop().value);
     }
-    
+
     private Stack stacker(){
         Stack<Node> aStack = new Stack();
         Collections.sort(nodes);
         Collections.reverse(nodes);
         Iterator<Node> itr = nodes.iterator();
         while(itr.hasNext())
-            
             aStack.add(itr.next());
         return aStack;
     }
-    
+
     private void dfs(Node aNode){
-        aNode.explored = true;
         deepNode = aNode;
-        Iterator<Edge> itr = aNode.myEdges.iterator();
-        while(itr.hasNext()){
-            Node toNode = itr.next().toNode();
-                if (toNode != aNode && toNode.explored == false)
-                    dfs(toNode);
+        aNode.explored = true;
+        for(int i = 0; i < aNode.myEdges.size(); i++){
+            Node toNode = aNode.myEdges.get(i).toNode();
+            if (toNode != aNode && toNode.explored == false && toNode.myEdges.size() > 0) {
+                dfs(toNode);
+            } else {
+                toNode.explored = true;
+                toNode.value = finishingTime;
+                finishingTime++;
+            }
+            
         }
         finishingTime++;
         aNode.value = finishingTime;
     }
-    
+
     private class Node implements Comparable<Node>{
         public Graph mygraph;
         public int name;
         public int value;
         public ArrayList<Edge> myEdges;
-        public boolean explored;
-        
+        //public ArrayList<Edge> unExplored;
+        public boolean explored = false;
+
         public Node(int name, Graph agraph){
             mygraph = agraph;
             this.name = name;
-            myEdges = new ArrayList<>();
+            myEdges = new ArrayList<Edge>();
+            //unExplored = new ArrayList<Edge>();
         }
         public void addEdge(Edge anEdge){
             myEdges.add(anEdge);
+            //unExplored.add(anEdge);
+        }
+        public void reset(){
+            //unExplored = new ArrayList<Edge>();
+            //Iterator<Edge> itr = myEdges.iterator();
+            explored = true;
+            //while(itr.hasNext())
+                //unExplored.add(itr.next());
         }
 
         @Override
@@ -164,13 +194,12 @@ public class Graph {
                 return 0;
         }
     }
-    
+
     private class Edge{
         private Node left;
         private Node right;
         private Graph mygraph;
-        public boolean traveled;
-        
+
         public Edge(Node left, Node right){
             this.left = left;
             this.right = right;
@@ -192,6 +221,12 @@ public class Graph {
             else
                 return null;
         }
+
+//        public void explore(){
+//            left.unExplored.remove(this);
+//            right.unExplored.remove(this);
+//        }
+
     }
     private enum Direction{left,right};
 }

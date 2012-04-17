@@ -21,7 +21,7 @@ public class StronglyConnectedComponents {
     public static void main(String[] args) {
         ArrayList<int[]> intArray;
         try {
-            intArray = FileArrayProvider.readLines("/home/brian/SCC.txt");
+            intArray = FileArrayProvider.readLines("C:/SCC.txt");
         } 
         catch (IOException ex) {
             Logger.getLogger(StronglyConnectedComponents.class.getName()).log(Level.SEVERE, null, ex);
