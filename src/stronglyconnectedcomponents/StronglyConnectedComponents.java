@@ -3,7 +3,7 @@
  * and open the template in the editor.
  */
 package stronglyconnectedcomponents;
-
+//make sure to have 5 meg stack and 1gig heap to run this bad boy***
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.logging.Level;
